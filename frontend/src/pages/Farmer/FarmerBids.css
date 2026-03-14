@@ -1,0 +1,153 @@
+/* FarmerBids.css */
+
+.bids-main {
+  flex: 1;
+  padding: 3rem 5%;
+  background-color: #f9fbf9;
+}
+
+.bids-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.bids-header {
+  margin-bottom: 2rem;
+}
+
+.bids-header h2 {
+  color: #1b5e20;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+}
+
+.bids-header p {
+  color: #666;
+  margin: 0;
+}
+
+/* --- Card Grid Layout --- */
+.bids-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* --- Individual Bid Card --- */
+.bid-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-left: 5px solid #ccc; /* Default border */
+}
+
+.bid-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Colored borders based on status */
+.bid-card.pending { border-left-color: #f57c00; }
+.bid-card.accepted { border-left-color: #2e7d32; }
+.bid-card.rejected { border-left-color: #d32f2f; }
+
+.bid-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.8rem;
+}
+
+.bid-card-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+/* Status Badges */
+.badge-pending { background-color: #fff3e0; color: #e65100; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-accepted { background-color: #e8f5e9; color: #2e7d32; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-rejected { background-color: #ffebee; color: #c62828; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+
+/* Card Body Details */
+.bid-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.bid-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.bid-detail.amount {
+  margin-top: 0.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #eee;
+}
+
+.detail-value.price {
+  font-size: 1.3rem;
+  color: #2e7d32;
+}
+
+/* Card Actions */
+.bid-card-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.btn-accept, .btn-reject {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-accept {
+  background-color: #2e7d32;
+  color: white;
+}
+
+.btn-accept:hover { background-color: #1b5e20; }
+
+.btn-reject {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.btn-reject:hover { background-color: #ffcdd2; }
+
+/* Empty state */
+.no-bids {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 8px;
+  color: #666;
+}

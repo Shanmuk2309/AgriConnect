@@ -1,0 +1,46 @@
+/* BuyerMarketplace.css */
+
+.market-main { flex: 1; padding: 3rem 5%; background-color: #f9fbf9; }
+.market-container { max-width: 1200px; margin: 0 auto; }
+.market-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.market-header h2 { color: #1b5e20; margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+.market-header p { color: #666; margin: 0; }
+
+.search-box input { padding: 0.8rem 1.2rem; border: 1px solid #ccc; border-radius: 25px; width: 300px; font-size: 0.95rem; outline: none; transition: all 0.3s; }
+.search-box input:focus { border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1); }
+
+/* Crop Card Grid */
+.crop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+.crop-card { background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; flex-direction: column; transition: transform 0.2s ease; border-top: 4px solid #2e7d32; }
+.crop-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+
+.crop-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
+.crop-card-header h4 { margin: 0; font-size: 1.25rem; color: #333; }
+.badge-available { background-color: #e8f5e9; color: #2e7d32; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+
+.crop-card-body { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
+.crop-detail { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+.detail-label { color: #666; }
+.detail-value { font-weight: 600; color: #333; }
+.price-row { margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px dashed #eee; }
+.detail-value.price { color: #d32f2f; font-size: 1.1rem; }
+
+.btn-bid { width: 100%; padding: 0.8rem; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background-color: #2e7d32; color: white; transition: background-color 0.2s; font-size: 1rem; }
+.btn-bid:hover { background-color: #1b5e20; }
+.no-results { grid-column: 1 / -1; text-align: center; padding: 3rem; background: white; border-radius: 8px; color: #666; border: 1px dashed #ccc; }
+
+/* Modal Styles (Reused from Storage) */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background-color: white; width: 100%; max-width: 450px; border-radius: 8px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: modalFadeIn 0.2s ease-out; }
+@keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.modal-header h3 { margin: 0; color: #1b5e20; font-size: 1.5rem; }
+.btn-close { background: none; border: none; font-size: 2rem; color: #999; cursor: pointer; line-height: 1; }
+.btn-close:hover { color: #333; }
+.modal-form { display: flex; flex-direction: column; gap: 1.2rem; }
+.modal-form .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.modal-form label { font-weight: 600; font-size: 0.9rem; color: #444; }
+.modal-form input { padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+.modal-form input:focus { border-color: #2e7d32; outline: none; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
+.modal-actions button { padding: 0.8rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; }

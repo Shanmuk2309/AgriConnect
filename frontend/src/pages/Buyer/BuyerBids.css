@@ -1,0 +1,153 @@
+/* BuyerBids.css */
+
+.buyer-bids-main { flex: 1; padding: 3rem 5%; background-color: #f9fbf9; }
+.buyer-bids-container { max-width: 1100px; margin: 0 auto; }
+.buyer-bids-header { margin-bottom: 2rem; }
+.buyer-bids-header h2 { color: #1b5e20; margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+.buyer-bids-header p { color: #666; margin: 0; }
+
+/* Grid Layout */
+.buyer-bids-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+
+/* Bid Cards */
+.buyer-bid-card { background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; flex-direction: column; transition: transform 0.2s ease; border-left: 5px solid #ccc; }
+.buyer-bid-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+
+/* Color coding borders based on status */
+.buyer-bid-card.pending { border-left-color: #f57c00; }
+.buyer-bid-card.accepted { border-left-color: #2e7d32; }
+.buyer-bid-card.rejected { border-left-color: #d32f2f; }
+
+.buyer-bid-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
+.buyer-bid-card-header h4 { margin: 0; font-size: 1.2rem; color: #333; }
+
+/* Status Badges */
+.badge-pending { background-color: #fff3e0; color: #e65100; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-accepted { background-color: #e8f5e9; color: #2e7d32; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-rejected { background-color: #ffebee; color: #c62828; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+
+/* Card Body Details */
+.buyer-bid-card-body { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
+.buyer-bid-detail { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+.buyer-bid-detail.amount { margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px dashed #eee; }
+.detail-value.price { font-size: 1.3rem; color: #1b5e20; } /* Dark green for offer amount */
+
+/* Actions */
+.buyer-bid-card-actions { display: flex; gap: 0.8rem; }
+.btn-cancel-bid { flex: 1; padding: 0.6rem; border: 1px solid #d32f2f; background-color: transparent; color: #d32f2f; border-radius: 4px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+.btn-cancel-bid:hover { background-color: #ffebee; }
+
+.btn-proceed { flex: 1; padding: 0.6rem; border: none; background-color: #2e7d32; color: white; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+.btn-proceed:hover { background-color: #1b5e20; }
+
+.no-bids { grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: white; border-radius: 8px; color: #666; border: 1px dashed #ccc; }
+
+/* --- Payment Modal Styles --- */
+.payment-modal {
+  max-width: 500px; /* Slightly wider for payment form */
+}
+
+/* New Status Badge for Paid */
+.badge-paid {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+.buyer-bid-card.paid { border-left-color: #1e88e5; }
+
+.order-summary {
+  background-color: #f9fbf9;
+  border: 1px solid #e8f5e9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.order-summary h4 {
+  margin: 0 0 1rem 0;
+  color: #1b5e20;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #ccc;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.total-price {
+  color: #d32f2f;
+  font-size: 1.4rem;
+}
+
+.payment-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.pay-option {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 0.8rem;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f5f5f5;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.pay-option input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.pay-option.active {
+  border-color: #2e7d32;
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.btn-pay-now {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #1565c0; /* Trustworthy blue for payment */
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-pay-now:hover {
+  background-color: #0d47a1;
+}

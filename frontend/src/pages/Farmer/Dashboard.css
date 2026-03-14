@@ -1,0 +1,110 @@
+/* FarmerDashboard.css */
+
+/* --- Profile Dropdown Logic --- */
+.profile-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-btn {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s ease;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.profile-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Small circle avatar inside the button */
+.avatar-small {
+  background-color: #2e7d32;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+/* The hidden menu container */
+.dropdown-content {
+  display: none; /* Hidden by default */
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  min-width: 220px;
+  box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  z-index: 100;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+/* Show the menu on hover! */
+.profile-menu:hover .dropdown-content {
+  display: block;
+  animation: slideDown 0.2s ease-out;
+}
+
+.profile-menu::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 1.5rem; /* This securely covers the gap we created earlier */
+  background: transparent;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styling the links inside the dropdown */
+.dropdown-content a,
+.dropdown-content .logout-btn {
+  color: #555;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dropdown-content a:hover {
+  background-color: #f0f9f0;
+  color: #2e7d32;
+}
+
+/* Specific styling for the logout button */
+.dropdown-content .logout-btn {
+  border-top: 1px solid #eee;
+  color: #d32f2f;
+}
+
+.dropdown-content .logout-btn:hover {
+  background-color: #ffebee;
+  color: #c62828;
+}

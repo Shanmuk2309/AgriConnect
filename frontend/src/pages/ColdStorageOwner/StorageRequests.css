@@ -1,0 +1,28 @@
+.requests-main { flex: 1; padding: 3rem 5%; background-color: #f9fbf9; }
+.requests-container { max-width: 1100px; margin: 0 auto; }
+.requests-header { margin-bottom: 2rem; }
+.requests-header h2 { color: #1b5e20; margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+
+.requests-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.request-card { background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; flex-direction: column; border-left: 5px solid #ccc; }
+.request-card.pending { border-left-color: #f57c00; }
+.request-card.approved { border-left-color: #1e88e5; } /* Blue for storage approval */
+.request-card.declined { border-left-color: #d32f2f; }
+
+.request-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
+.request-card-header h4 { margin: 0; font-size: 1.2rem; color: #333; }
+
+.badge-pending { background-color: #fff3e0; color: #e65100; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-approved { background-color: #e3f2fd; color: #1565c0; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+.badge-declined { background-color: #ffebee; color: #c62828; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+
+.request-card-body { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
+.request-detail { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+.request-detail.highlight { margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px dashed #eee; }
+.detail-value.weight { font-size: 1.2rem; color: #1e88e5; }
+
+.request-card-actions { display: flex; gap: 0.8rem; }
+.btn-approve { flex: 1; padding: 0.6rem; border: none; background-color: #1e88e5; color: white; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-approve:hover { background-color: #1565c0; }
+.btn-decline { flex: 1; padding: 0.6rem; border: none; background-color: #ffebee; color: #d32f2f; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-decline:hover { background-color: #ffcdd2; }
