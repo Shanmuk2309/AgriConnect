@@ -13,12 +13,15 @@ const MyFacilities = () => {
     { _id: 'f2', name: 'AgriSafe Storage North', location: 'Vizianagaram, AP', total_capacity: 500, available_capacity: 0, price_per_ton: 1500 }
   ]);
 
-  // --- States for Edit Modal ---
+  // --- UPDATED: States for Edit Modal ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
-  const [newCapacity, setNewCapacity] = useState('');
+  
+  // New states to track WHAT we are updating and its VALUE
+  const [editType, setEditType] = useState('capacity'); 
+  const [editValue, setEditValue] = useState('');
 
-  // --- NEW: States for Add Modal ---
+  // --- States for Add Modal ---
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newFacilityData, setNewFacilityData] = useState({
     name: '',
@@ -29,10 +32,11 @@ const MyFacilities = () => {
 
   const handleLogout = () => navigate('/login');
 
-  // --- Edit Capacity Functions ---
+  // --- UPDATED: Edit Functions ---
   const openEditModal = (facility) => {
     setSelectedFacility(facility);
-    setNewCapacity(facility.available_capacity);
+    setEditType('capacity'); // Default to capacity when opened
+    setEditValue(facility.available_capacity);
     setIsEditModalOpen(true);
   };
 
@@ -41,19 +45,34 @@ const MyFacilities = () => {
     setSelectedFacility(null);
   };
 
-  const handleUpdateCapacity = (e) => {
+  const handleEditTypeChange = (e) => {
+    const type = e.target.value;
+    setEditType(type);
+    // Automatically swap the input value to the current capacity or price of the facility
+    setEditValue(type === 'capacity' ? selectedFacility.available_capacity : selectedFacility.price_per_ton);
+  };
+
+  const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    const updatedFacilities = facilities.map(fac => 
-      fac._id === selectedFacility._id ? { ...fac, available_capacity: Number(newCapacity) } : fac
-    );
+    
+    const updatedFacilities = facilities.map(fac => {
+      if (fac._id === selectedFacility._id) {
+        if (editType === 'capacity') {
+          return { ...fac, available_capacity: Number(editValue) };
+        } else if (editType === 'price') {
+          return { ...fac, price_per_ton: Number(editValue) };
+        }
+      }
+      return fac;
+    });
+
     setFacilities(updatedFacilities);
-    alert(`Successfully updated capacity for ${selectedFacility.name}!`);
+    alert(`Successfully updated the ${editType} for ${selectedFacility.name}!`);
     closeEditModal();
   };
 
-  // --- NEW: Add Facility Functions ---
+  // --- Add Facility Functions ---
   const openAddModal = () => {
-    // Reset form to blank when opening
     setNewFacilityData({ name: '', location: '', total_capacity: '', price_per_ton: '' });
     setIsAddModalOpen(true);
   };
@@ -67,20 +86,16 @@ const MyFacilities = () => {
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
-    
-    // Create a new facility object (mocking a database creation)
     const newFacility = {
-      _id: 'f' + Date.now(), // Generate a random mock ID
+      _id: 'f' + Date.now(), 
       name: newFacilityData.name,
       location: newFacilityData.location,
       total_capacity: Number(newFacilityData.total_capacity),
-      available_capacity: Number(newFacilityData.total_capacity), // A new facility starts 100% empty/available
+      available_capacity: Number(newFacilityData.total_capacity), 
       price_per_ton: Number(newFacilityData.price_per_ton)
     };
 
-    // Add it to the existing array of facilities
     setFacilities([...facilities, newFacility]);
-    
     alert(`Successfully added ${newFacility.name} to your portfolio!`);
     closeAddModal();
   };
@@ -111,9 +126,8 @@ const MyFacilities = () => {
           <div className="facilities-header">
             <div>
               <h2>Manage My Facilities</h2>
-              <p>Keep your available capacity up to date so farmers can book space.</p>
+              <p>Keep your available capacity and pricing up to date.</p>
             </div>
-            {/* --- UPDATED: Connect button to openAddModal --- */}
             <button className="btn-primary" onClick={openAddModal}>+ Add New Facility</button>
           </div>
 
@@ -146,8 +160,9 @@ const MyFacilities = () => {
                 </div>
 
                 <div className="facility-card-actions">
+                  {/* --- UPDATED BUTTON --- */}
                   <button className="btn-secondary" style={{ width: '100%' }} onClick={() => openEditModal(facility)}>
-                    Update Capacity
+                    Update
                   </button>
                 </div>
               </div>
@@ -156,41 +171,63 @@ const MyFacilities = () => {
         </div>
       </main>
 
-      {/* --- Existing: Update Capacity Modal --- */}
+      {/* --- UPDATED: Dynamic Update Modal --- */}
       {isEditModalOpen && selectedFacility && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Update Available Capacity</h3>
+              <h3>Update Facility Details</h3>
               <button className="btn-close" onClick={closeEditModal}>&times;</button>
             </div>
             <p className="modal-subtitle">Updating <strong>{selectedFacility.name}</strong></p>
             
-            <form onSubmit={handleUpdateCapacity} className="modal-form">
+            <form onSubmit={handleUpdateSubmit} className="modal-form">
+              
+              {/* Dropdown to select WHAT to update */}
               <div className="form-group">
-                <label>Available Space (in Tons)</label>
+                <label>What would you like to update?</label>
+                <select 
+                  value={editType} 
+                  onChange={handleEditTypeChange}
+                  style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }}
+                >
+                  <option value="capacity">Available Capacity</option>
+                  <option value="price">Price per Ton</option>
+                </select>
+              </div>
+
+              {/* Dynamic Input based on selection */}
+              <div className="form-group">
+                <label>
+                  {editType === 'capacity' ? 'Available Space (in Tons)' : 'New Price (₹/month)'}
+                </label>
                 <input 
                   type="number" 
-                  value={newCapacity} 
-                  onChange={(e) => setNewCapacity(e.target.value)} 
+                  value={editValue} 
+                  onChange={(e) => setEditValue(e.target.value)} 
                   min="0" 
-                  max={selectedFacility.total_capacity} 
+                  max={editType === 'capacity' ? selectedFacility.total_capacity : undefined} 
                   required 
                 />
-                <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
-                  Cannot exceed total capacity of {selectedFacility.total_capacity} Tons.
-                </small>
+                
+                {/* Only show the capacity warning if they are editing capacity */}
+                {editType === 'capacity' && (
+                  <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
+                    Cannot exceed total capacity of {selectedFacility.total_capacity} Tons.
+                  </small>
+                )}
               </div>
-              <div className="modal-actions">
+
+              <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
                 <button type="button" className="btn-secondary" onClick={closeEditModal}>Cancel</button>
-                <button type="submit" className="btn-primary">Save Capacity</button>
+                <button type="submit" className="btn-primary">Save Changes</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- NEW: Add Facility Modal --- */}
+      {/* --- Add Facility Modal (Unchanged) --- */}
       {isAddModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">

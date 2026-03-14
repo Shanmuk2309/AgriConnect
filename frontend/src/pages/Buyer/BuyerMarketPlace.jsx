@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../Public/LandingPage.css'; 
 import './BuyerDashboard.css';     
-import './BuyerMarketPlace.css'; // We will create this next
+import './BuyerMarketPlace.css'; 
 
 const BuyerMarketplace = () => {
   const navigate = useNavigate();
@@ -13,11 +13,11 @@ const BuyerMarketplace = () => {
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
 
-  // Mock data representing crops listed by farmers
+  // --- UPDATED: Added listed_date to the mock data ---
   const [crops, setCrops] = useState([
-    { _id: '101', crop_name: 'Tomatoes', farmer_name: 'Ramesh Kumar', location: 'Chittoor, AP', quantity: 50, expected_price: 2500 },
-    { _id: '102', crop_name: 'Onions', farmer_name: 'Srinivas', location: 'Kurnool, AP', quantity: 200, expected_price: 3000 },
-    { _id: '103', crop_name: 'Potatoes', farmer_name: 'Venkatesh', location: 'Vizag, AP', quantity: 100, expected_price: 1800 }
+    { _id: '101', crop_name: 'Tomatoes', farmer_name: 'Ramesh Kumar', location: 'Chittoor, AP', quantity: 50, expected_price: 2500, listed_date: '2026-03-14' },
+    { _id: '102', crop_name: 'Onions', farmer_name: 'Srinivas', location: 'Kurnool, AP', quantity: 200, expected_price: 3000, listed_date: '2026-03-12' },
+    { _id: '103', crop_name: 'Potatoes', farmer_name: 'Venkatesh', location: 'Vizag, AP', quantity: 100, expected_price: 1800, listed_date: '2026-03-10' }
   ]);
 
   const handleLogout = () => navigate('/login');
@@ -37,7 +37,7 @@ const BuyerMarketplace = () => {
   const handleBidSubmit = (e) => {
     e.preventDefault();
     
-    // Prepare payload for backend (Later: axios.post('/api/bids/add', payload))
+    // Prepare payload for backend
     const bidPayload = {
       buyerId: "Dummy_Buyer_456",
       cropId: selectedCrop._id,
@@ -117,6 +117,13 @@ const BuyerMarketplace = () => {
                       <span className="detail-label">Location:</span>
                       <span className="detail-value">{crop.location}</span>
                     </div>
+                    
+                    {/* --- NEW: Date Listed Display --- */}
+                    <div className="crop-detail">
+                      <span className="detail-label">Listed On:</span>
+                      <span className="detail-value" style={{ color: '#1565c0', fontWeight: 'bold' }}>{crop.listed_date}</span>
+                    </div>
+
                     <div className="crop-detail">
                       <span className="detail-label">Quantity:</span>
                       <span className="detail-value">{crop.quantity} Qtl</span>

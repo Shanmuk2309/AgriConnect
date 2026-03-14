@@ -49,7 +49,7 @@ const MyCrops = () => {
             </button>
             <div className="dropdown-content">
               <Link to="/farmer/profile">My Profile</Link>
-              <Link to="/farmer/dashboard">Overview Dashboard</Link>
+              <Link to="/farmer/overview">Overview Dashboard</Link>
               <button onClick={handleLogout} className="logout-btn">Log Out</button>
             </div>
           </div>
