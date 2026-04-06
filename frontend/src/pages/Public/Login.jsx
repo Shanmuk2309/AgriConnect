@@ -1,28 +1,61 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import './Auth.css'; 
 
 const Login = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     identifier: '', 
     password: '',
-    userType: 'Farmer' // Default value
+    userType: 'Farmer' 
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { 
     e.preventDefault();
-    console.log("Login submitted with:", formData);
-    
-    // Future step: Send formData to /api/auth/login using axios
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await axios.post('/api/auth/login', formData);
+      
+      // Save Token and Role
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('userRole', response.data.role);
+
+      // Decode the token to get the unique User ID
+      const decodedToken = jwtDecode(response.data.token);
+      const actualUserId = decodedToken.id || decodedToken.userId || decodedToken._id;
+      if (actualUserId) {
+        localStorage.setItem('userId', actualUserId);
+      }
+
+      if (response.data.role === 'Farmer') {
+        navigate('/farmer/dashboard'); 
+      } else if (response.data.role === 'Buyer') {
+        navigate('/buyer/dashboard');
+      } else if (response.data.role === 'Cold Storage Owner') {
+        navigate('/cs-owner/dashboard');
+      } else {
+        navigate('/');
+      }
+
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // --- Dynamic UI Logic ---
-  // We change the label and placeholder based on the selected userType
   const getIdentifierLabel = () => {
     if (formData.userType === 'Farmer') return 'Mobile Number';
     return 'Email Address';
@@ -32,7 +65,6 @@ const Login = () => {
     if (formData.userType === 'Farmer') return 'Enter your 10-digit mobile number';
     return 'Enter your email address';
   };
-  // ------------------------
 
   return (
     <div className="auth-container">
@@ -41,6 +73,8 @@ const Login = () => {
           <h2>Welcome Back</h2>
           <p>Login to your AgriConnect account</p>
         </div>
+
+        {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '10px' }}>{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -53,7 +87,6 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            {/* The label dynamically updates here! */}
             <label>{getIdentifierLabel()}</label>
             <input 
               type="text" 
@@ -77,7 +110,9 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="btn-auth-primary">Log In</button>
+          <button type="submit" className="btn-auth-primary" disabled={loading}>
+            {loading ? 'Logging In...' : 'Log In'}
+          </button>
         </form>
 
         <div className="auth-footer">

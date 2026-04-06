@@ -1,52 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import '../Public/LandingPage.css'; // Global layout and navbar styles
-import './Dashboard.css';           // Profile dropdown styles (shared with FarmerDashboard)
-import './FarmerCrops.css';         // Specific styles for the crops table
+import axios from 'axios';
+import '../Public/LandingPage.css'; 
+import './Dashboard.css';           
+import './FarmerCrops.css';         
 
 const MyCrops = () => {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+  const [crops, setCrops] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // --- UPDATED: Added listed_date to the mock data ---
-  const [crops, setCrops] = useState([
-    { _id: '1', crop_name: 'Tomatoes', quantity: 50, expected_price: 2500, status: 'Listed', listed_date: '2026-03-14' },
-    { _id: '2', crop_name: 'Potatoes', quantity: 100, expected_price: 1800, status: 'In Storage', listed_date: '2026-03-12' },
-    { _id: '3', crop_name: 'Onions', quantity: 200, expected_price: 3000, status: 'Sold', listed_date: '2026-03-10' }
-  ]);
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        // Fetch user data for the navbar
+        const userRes = await axios.get(`/api/farmers/${userId}`);
+        setUserData(userRes.data);
+
+        // Fetch crops and filter to only show this farmer's crops
+        const cropsRes = await axios.get('/api/crops');
+        const myCrops = cropsRes.data.filter(crop => crop.farmerId === userId);
+        setCrops(myCrops);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId, navigate]);
 
   const handleLogout = () => {
+    localStorage.clear();
     navigate('/login');
   };
 
-  const handleDelete = (id) => {
-    // Later: axios.delete(`/api/crops/${id}`)
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this crop listing?");
     if (confirmDelete) {
-      const updatedCrops = crops.filter(crop => crop._id !== id);
-      setCrops(updatedCrops);
+      try {
+        // Delete from database
+        await axios.delete(`/api/crops/${id}`);
+        // Remove from UI
+        setCrops(crops.filter(crop => crop._id !== id));
+      } catch (error) {
+        console.error("Error deleting crop:", error);
+        alert("Failed to delete crop. Please try again.");
+      }
     }
   };
 
+  const firstName = userData?.name ? userData.name.split(' ')[0] : 'Farmer';
+
+  if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading your crops...</div>;
+
   return (
     <div className="landing-container">
-      {/* --- Consistent Navigation Bar --- */}
       <nav className="navbar">
         <div className="navbar-brand">
-          <Link to="/farmer/dashboard" style={{ textDecoration: 'none' }}>
-            <h1>AgriConnect</h1>
-          </Link>
+          <Link to="/farmer/dashboard" style={{ textDecoration: 'none' }}><h1>AgriConnect</h1></Link>
         </div>
         <div className="navbar-links">
           <Link to="/farmer/crops" className="nav-link" style={{ color: '#2e7d32' }}>My Crops</Link>
           <Link to="/farmer/bids" className="nav-link">Bids & Offers</Link>
           <Link to="/farmer/storage" className="nav-link">Cold Storages</Link>
-
           <div className="nav-divider"></div>
-
           <div className="profile-menu">
-            <button className="profile-btn">
-              Ramesh ▼
-            </button>
+            <button className="profile-btn">{firstName} ▼</button>
             <div className="dropdown-content">
               <Link to="/farmer/profile">My Profile</Link>
               <Link to="/farmer/overview">Overview Dashboard</Link>
@@ -56,7 +85,6 @@ const MyCrops = () => {
         </div>
       </nav>
 
-      {/* --- Main Content Area --- */}
       <main className="crops-main">
         <div className="crops-container">
           <div className="crops-header">
@@ -64,9 +92,7 @@ const MyCrops = () => {
               <h2>My Crop Inventory</h2>
               <p>Manage your listings and keep quantities up to date.</p>
             </div>
-            <Link to="/farmer/crops/add" className="btn-primary">
-              + Add New Crop
-            </Link>
+            <Link to="/farmer/crops/add" className="btn-primary">+ Add New Crop</Link>
           </div>
 
           <div className="table-responsive">
@@ -74,7 +100,6 @@ const MyCrops = () => {
               <thead>
                 <tr>
                   <th>Crop Name</th>
-                  {/* --- NEW: Date Header --- */}
                   <th>Date Listed</th>
                   <th>Quantity (Qtl)</th>
                   <th>Expected Price (₹/Qtl)</th>
@@ -87,13 +112,12 @@ const MyCrops = () => {
                   crops.map((crop) => (
                     <tr key={crop._id}>
                       <td className="fw-bold">{crop.crop_name}</td>
-                      {/* --- NEW: Date Data Cell --- */}
-                      <td style={{ color: '#666', fontSize: '0.9rem' }}>{crop.listed_date}</td>
+                      <td style={{ color: '#666', fontSize: '0.9rem' }}>{crop.listed_date || new Date().toISOString().split('T')[0]}</td>
                       <td>{crop.quantity}</td>
                       <td className="text-success fw-bold">₹{crop.expected_price}</td>
                       <td>
-                        <span className={`status-badge ${crop.status.toLowerCase().replace(' ', '-')}`}>
-                          {crop.status}
+                        <span className={`status-badge ${(crop.status || 'listed').toLowerCase().replace(' ', '-')}`}>
+                          {crop.status || 'Listed'}
                         </span>
                       </td>
                       <td className="action-buttons">
@@ -104,7 +128,6 @@ const MyCrops = () => {
                   ))
                 ) : (
                   <tr>
-                    {/* --- UPDATED: colSpan changed from 5 to 6 to account for the new column --- */}
                     <td colSpan="6" className="text-center">You haven't listed any crops yet.</td>
                   </tr>
                 )}
@@ -114,7 +137,6 @@ const MyCrops = () => {
         </div>
       </main>
 
-      {/* --- Footer --- */}
       <footer className="footer" style={{ marginTop: 'auto' }}>
         <p>&copy; {new Date().getFullYear()} AgriConnect. All rights reserved.</p>
       </footer>

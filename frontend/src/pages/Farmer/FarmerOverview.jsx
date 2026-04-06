@@ -1,30 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../Public/LandingPage.css'; 
 import './Dashboard.css';     
-import './FarmerOverview.css'; // We will create this below
+import './FarmerOverview.css'; 
 
 const FarmerOverview = () => {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock aggregated data
+  // Still mocking stats until we build your Bid and Crop fetches
   const stats = {
     totalListed: 8,
     acceptedBids: 3,
     rejectedBids: 1,
     inStorageCount: 2
   };
-
   const storageDetails = [
     { id: 1, crop: 'Potatoes', quantity: 50, location: 'Wisdom Cold Storage' },
     { id: 2, crop: 'Apples', quantity: 20, location: 'Kisan Fresh Vault' }
   ];
 
-  const handleLogout = () => navigate('/login');
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          navigate('/login');
+          return;
+        }
+        const response = await axios.get(`/api/farmers/${userId}`);
+        setUserData(response.data);
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
+
+  if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading overview...</div>;
+
+  const firstName = userData?.name ? userData.name.split(' ')[0] : 'Farmer';
 
   return (
     <div className="landing-container">
-      {/* --- Navbar --- */}
       <nav className="navbar">
         <div className="navbar-brand">
           <Link to="/farmer/dashboard" style={{ textDecoration: 'none' }}><h1>AgriConnect</h1></Link>
@@ -35,7 +62,7 @@ const FarmerOverview = () => {
           <Link to="/farmer/storage" className="nav-link">Cold Storages</Link>
           <div className="nav-divider"></div>
           <div className="profile-menu">
-            <button className="profile-btn" style={{ color: '#2e7d32', fontWeight: 'bold' }}>Ramesh ▼</button>
+            <button className="profile-btn" style={{ color: '#2e7d32', fontWeight: 'bold' }}>{firstName} ▼</button>
             <div className="dropdown-content">
               <Link to="/farmer/profile">My Profile</Link>
               <Link to="/farmer/overview" style={{ color: '#2e7d32', backgroundColor: '#f0f9f0' }}>Overview Dashboard</Link>
@@ -45,7 +72,6 @@ const FarmerOverview = () => {
         </div>
       </nav>
 
-      {/* --- Main Content --- */}
       <main className="overview-main">
         <div className="overview-container">
           <h2 className="overview-title">Business Overview</h2>

@@ -249,6 +249,43 @@ describe('AgriConnect API Endpoints', () => {
         });
     });
 
+    // --- END-TO-END INTEGRATION TESTS ---
+    describe('End-to-End Market Integration Flow', () => {
+        let integrationFarmerId, integrationBuyerId, integrationCropId, integrationBidId;
+
+        it('should allow a farmer to register and list a crop', async () => {
+            // 1. Register Farmer
+            const farmerRes = await request(app).post('/api/farmers/add').send({ 
+                name: "Integration Farmer", contact: "8888888888", email: "int.farmer@example.com", password: "pass", no_of_acres: 2, 
+                address: { d_no: "1", village: "Test", mandal: "Test", district: "Test", state: "Test", pincode: "000000" } 
+            });
+            integrationFarmerId = farmerRes.body.farmerId;
+
+            // 2. Add Crop
+            const cropRes = await request(app).post('/api/crops/add').send({ 
+                farmerId: integrationFarmerId, crop_name: "Integration Wheat", quantity: 100, expected_price: 30000 
+            });
+            integrationCropId = cropRes.body.cropId;
+            expect(cropRes.statusCode).toEqual(201);
+        });
+
+        it('should allow a buyer to register and bid on the listed crop', async () => {
+            // 1. Register Buyer
+            const buyerRes = await request(app).post('/api/buyers/add').send({ 
+                name: "Integration Buyer", contact: "7777777777", email: "int.buyer@example.com", password: "pass", 
+                address: { d_no: "2", village: "Test2", mandal: "Test2", district: "Test2", state: "Test2", pincode: "111111" } 
+            });
+            integrationBuyerId = buyerRes.body.buyerId;
+
+            // 2. Place Bid
+            const bidRes = await request(app).post('/api/bids/add').send({ 
+                buyerId: integrationBuyerId, cropId: integrationCropId, bid_amount: 32000 
+            });
+            integrationBidId = bidRes.body.bidId;
+            expect(bidRes.statusCode).toEqual(201);
+        });
+    });
+
     afterAll(async () => {
         // Failsafe cleanup: Just in case a test fails before hitting the DELETE endpoints, 
         // this ensures our database stays clean for the next test run.
@@ -259,6 +296,11 @@ describe('AgriConnect API Endpoints', () => {
         await client.db("AgriDB").collection('cold storages').deleteMany({cs_ownerId: "Dummy cs owner 123"});
         await client.db("AgriDB").collection('bids').deleteMany({buyerId: "Dummy buyer 123"});
         
+        // Add cleanup for the new integration entities
+        await client.db("AgriDB").collection("farmers").deleteMany({ email: "int.farmer@example.com" });
+        await client.db("AgriDB").collection('buyers').deleteMany({ email: "int.buyer@example.com"});
+        await client.db("AgriDB").collection('Crops').deleteMany({ farmerId: "Dummy farmer ID 123"}); // Assuming cleanup handles referenced IDs
+
         await client.close();
     });
 });

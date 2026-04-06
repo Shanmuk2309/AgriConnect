@@ -1,19 +1,25 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './LandingPage.css'; 
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  // Start with empty strings so the user can search for anything
   const [searchParams, setSearchParams] = useState({
-    commodity: 'Tomato',
-    state: 'Andhra Pradesh',
-    district: 'Chittoor'
+    commodity: '',
+    state: '',
+    district: ''
   });
   const [marketData, setMarketData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // --- NEW: Smooth Scroll Function ---
   const scrollToMarket = (e) => {
-    e.preventDefault(); // Prevent default anchor jump
+    e.preventDefault(); 
     const marketSection = document.getElementById('market-section');
     if (marketSection) {
       marketSection.scrollIntoView({ behavior: 'smooth' });
@@ -24,41 +30,62 @@ const LandingPage = () => {
     setSearchParams({ ...searchParams, [e.target.name]: e.target.value });
   };
 
-  const fetchMarketPrices = (e) => {
+  const fetchMarketPrices = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await axios.get('/api/market/prices', { params: searchParams });
       setMarketData({
         success: true,
-        date_fetched: new Date().toLocaleDateString(),
-        records: [
-          { market: 'Madanapalle', min_price: 2000, max_price: 3200, modal_price: 2800 },
-          { market: 'Punganur', min_price: 1800, max_price: 3000, modal_price: 2500 },
-          { market: 'V.Kota', min_price: 2100, max_price: 3300, modal_price: 2900 }
-        ]
+        date_fetched: response.data.date_fetched || new Date().toLocaleDateString(),
+        records: response.data.records || []
       });
+    } catch (error) {
+      console.error("Error fetching market prices:", error);
+      alert("Failed to fetch live market prices. Please try again later.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
+  };
+
+  const getDashboardRoute = () => {
+    if (userRole === 'Farmer') return '/farmer/dashboard';
+    if (userRole === 'Buyer') return '/buyer/dashboard';
+    if (userRole === 'Cold Storage Owner') return '/cs-owner/dashboard';
+    return '/login';
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/'); 
   };
 
   return (
     <div className="landing-container">
-      {/* --- UPDATED: Navigation Bar --- */}
       <nav className="navbar">
         <div className="navbar-brand">
           <h1>AgriConnect</h1>
         </div>
         <div className="navbar-links">
-          {/* New Market Prices Link */}
           <a href="#market-section" onClick={scrollToMarket} className="nav-link">Market Prices</a>
-          
-          <Link to="/login" className="nav-link">Log In</Link>
-          
-          {/* New Vertical Divider */}
           <div className="nav-divider"></div>
           
-          <Link to="/register" className="btn-primary">Get Started</Link>
+          {token ? (
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <Link to={getDashboardRoute()} className="nav-link" style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                My Dashboard
+              </Link>
+              <button onClick={handleLogout} className="btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.9rem' }}>
+                Log Out
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <Link to="/login" className="nav-link">Log In</Link>
+              <Link to="/register" className="btn-primary">Get Started</Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -70,12 +97,17 @@ const LandingPage = () => {
             Trade smarter, store safer, and grow your business.
           </p>
           <div className="hero-actions">
-            <Link to="/register" className="btn-primary large">Join the Network</Link>
-            <Link to="/login" className="btn-secondary large">Access Dashboard</Link>
+            {token ? (
+              <Link to={getDashboardRoute()} className="btn-primary large">Go to Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/register" className="btn-primary large">Join the Network</Link>
+                <Link to="/login" className="btn-secondary large">Access Dashboard</Link>
+              </>
+            )}
           </div>
         </div>
       </header>
-
       
       <section className="features-section">
         <h3 className="section-title">Who is AgriConnect For?</h3>
@@ -98,26 +130,26 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* --- UPDATED: Added id="market-section" --- */}
       <section id="market-section" className="market-section">
         <div className="market-container">
           <div className="market-header">
             <h3>Live Market Prices</h3>
-            <p>Check today's Mandi rates directly from Agmarknet before making a trade.</p>
+            <p>Check today's Mandi rates. <strong>Leave the commodity blank to view all crops in a region!</strong></p>
           </div>
 
           <form onSubmit={fetchMarketPrices} className="market-search-form">
             <div className="form-group">
-              <label>Commodity</label>
-              <input type="text" name="commodity" value={searchParams.commodity} onChange={handleInputChange} placeholder="e.g., Tomato" required />
+              <label>Commodity (Optional)</label>
+              {/* Removed 'required' so users can fetch all crops */}
+              <input type="text" name="commodity" value={searchParams.commodity} onChange={handleInputChange} placeholder="Any Crop (e.g. Potato, Wheat)" />
             </div>
             <div className="form-group">
-              <label>State</label>
-              <input type="text" name="state" value={searchParams.state} onChange={handleInputChange} placeholder="e.g., Andhra Pradesh" required />
+              <label>State (Optional)</label>
+              <input type="text" name="state" value={searchParams.state} onChange={handleInputChange} placeholder="e.g., Andhra Pradesh" />
             </div>
             <div className="form-group">
-              <label>District</label>
-              <input type="text" name="district" value={searchParams.district} onChange={handleInputChange} placeholder="e.g., Chittoor" required />
+              <label>District (Optional)</label>
+              <input type="text" name="district" value={searchParams.district} onChange={handleInputChange} placeholder="e.g., Chittoor" />
             </div>
             <div className="form-action">
               <button type="submit" className="btn-primary" disabled={loading}>
@@ -136,6 +168,7 @@ const LandingPage = () => {
                   <thead>
                     <tr>
                       <th>Market / Mandi</th>
+                      <th>Commodity</th>
                       <th>Min Price (₹/Qtl)</th>
                       <th>Max Price (₹/Qtl)</th>
                       <th>Modal Price (₹/Qtl)</th>
@@ -145,15 +178,17 @@ const LandingPage = () => {
                     {marketData.records.length > 0 ? (
                       marketData.records.map((record, index) => (
                         <tr key={index}>
-                          <td className="fw-bold">{record.market}</td>
-                          <td className="text-danger">₹{record.min_price}</td>
-                          <td className="text-success">₹{record.max_price}</td>
-                          <td className="fw-bold">₹{record.modal_price}</td>
+                          <td className="fw-bold">{record.market || record.Market}</td>
+                          {/* Added Commodity Column to show what crop it is */}
+                          <td>{record.commodity || record.Commodity}</td>
+                          <td className="text-danger">₹{record.min_price || record.Min_Price}</td>
+                          <td className="text-success">₹{record.max_price || record.Max_Price}</td>
+                          <td className="fw-bold">₹{record.modal_price || record.Modal_Price}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="text-center">No data found for this selection.</td>
+                        <td colSpan="5" className="text-center">No live data found for this selection. Try checking spelling or change filters.</td>
                       </tr>
                     )}
                   </tbody>
