@@ -134,7 +134,7 @@
   animation: fadeIn 0.3s ease-in;
 }
 
-.btn-pay-now {
+.btn-pay {
   width: 100%;
   padding: 1rem;
   border: none;
@@ -148,6 +148,6 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.btn-pay-now:hover {
+.btn-pay:hover {
   background-color: #0d47a1;
 }
