@@ -235,7 +235,7 @@ describe('AgriConnect API Endpoints', () => {
     // --- MARKET API TESTS ---
     describe('Market API', () => {
         it('should fetch live market prices from Agmarknet ', async () => {
-            const res = await request(app).get('/api/market/prices').query({
+            const res = await request(app).post('/api/market/prices').send({
                 commodity: 'Tomato',
                 state: 'Andhra Pradesh',
                 district: 'Chittoor'
