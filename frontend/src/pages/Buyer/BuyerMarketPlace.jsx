@@ -252,9 +252,6 @@ const BuyerMarketplace = () => {
               ) : (
                 <div className="no-results" style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
                   <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '1rem' }}>No crops found.</p>
-                  <p style={{ fontSize: '0.9rem', color: '#888' }}>
-                    <strong>Developer Check:</strong> Right-click the page, select "Inspect", and go to the "Console" tab. Look for the message <code style={{color: 'red'}}>"RAW CROPS FROM DATABASE"</code> to see if the database is actually sending crops to the Buyer!
-                  </p>
                 </div>
               )}
             </div>
