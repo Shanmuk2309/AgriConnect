@@ -1,11 +1,12 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const { client } = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // 1. POST: Create a new bid
-router.post('/add', async (req, res) => {
+router.post('/add', authMiddleware, async (req, res) => {
     try {
         const bidData = {
             ...req.body,
@@ -57,7 +58,7 @@ router.get('/crop/:cropId', async (req, res) => {
 });
 
 // 5. PUT: Update a specific bid
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { _id, ...updateData } = req.body; 
         const result = await client.db("AgriDB").collection("bids").findOneAndUpdate(
@@ -75,7 +76,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 6. DELETE: Withdraw/Remove a bid
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const result = await client.db("AgriDB").collection("bids").deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) {

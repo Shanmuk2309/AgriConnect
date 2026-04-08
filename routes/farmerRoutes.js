@@ -1,6 +1,7 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const { client } = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 4. PUT: Update a farmer's profile
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { _id, ...updateData } = req.body; 
         const result = await client.db("AgriDB").collection("farmers").findOneAndUpdate(
@@ -55,7 +56,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 5. DELETE: Delete a farmer's account
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const result = await client.db("AgriDB").collection("farmers").deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) return res.status(404).json({ message: 'Farmer not found' });

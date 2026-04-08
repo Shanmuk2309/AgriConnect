@@ -1,11 +1,12 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const { client } = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // 1. POST: Add a new cold storage facility
-router.post('/add', async (req, res) => {
+router.post('/add', authMiddleware, async (req, res) => {
     try {
         const results = await client.db("AgriDB").collection("cold storages").insertOne(req.body); 
         res.status(201).json({
@@ -42,7 +43,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 4. PUT: Update cold storage details (like available capacity)
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { _id, ...updateData } = req.body; 
         const result = await client.db("AgriDB").collection("cold storages").findOneAndUpdate(
@@ -60,7 +61,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 5. DELETE: Remove a cold storage facility
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const result = await client.db("AgriDB").collection("cold storages").deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) {

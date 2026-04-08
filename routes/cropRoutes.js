@@ -1,11 +1,12 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const { client } = require('../db');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // 1. POST: Create a new crop
-router.post('/add', async (req, res) => {
+router.post('/add', authMiddleware, async (req, res) => {
     try {
         const cropData = {
             ...req.body,
@@ -51,7 +52,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // 4. PUT: Update a specific crop
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         // Prevent accidental overwrite of the _id field
         const { _id, ...updateData } = req.body; 
@@ -73,7 +74,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // 5. DELETE: Remove a crop listing
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const result = await client.db("AgriDB").collection("Crops").deleteOne({ _id: new ObjectId(req.params.id) });
         

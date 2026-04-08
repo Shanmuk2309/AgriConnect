@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { client } = require('../db');
 const { ObjectId } = require('mongodb');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const db = client.db("AgriDB");
 const bookingsCollection = db.collection("bookings");
 
 // 1. Create a new storage booking request
-router.post('/add', async (req, res) => {
+router.post('/add', authMiddleware, async (req, res) => {
     try {
         const newBooking = req.body;
         newBooking.date = new Date().toISOString().split('T')[0]; // Store today's date
@@ -21,7 +22,7 @@ router.post('/add', async (req, res) => {
 });
 
 // 2. Fetch bookings (Can filter by farmerId or cs_ownerId)
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     try {
         const { farmerId, cs_ownerId } = req.query;
         let filter = {};
@@ -38,7 +39,7 @@ router.get('/', async (req, res) => {
 });
 
 // 3. Update a booking's status (Approve/Decline)
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
