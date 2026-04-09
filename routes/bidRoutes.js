@@ -61,15 +61,36 @@ router.get('/crop/:cropId', async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { _id, ...updateData } = req.body; 
-        const result = await client.db("AgriDB").collection("bids").findOneAndUpdate(
+        const bidsCollection = client.db("AgriDB").collection("bids");
+        const cropsCollection = client.db("AgriDB").collection("Crops");
+
+        const existingBid = await bidsCollection.findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingBid) {
+            return res.status(404).json({ message: 'Bid not found' });
+        }
+
+        const isBidOwner = String(existingBid.buyerId) === String(req.user.id);
+        const isStatusOnlyUpdate = Object.keys(updateData).length > 0 && Object.keys(updateData).every((key) => key === 'status');
+
+        let isCropOwner = false;
+        if (isStatusOnlyUpdate && ['Accepted', 'Rejected'].includes(updateData.status)) {
+            const linkedCrop = await cropsCollection.findOne({ _id: new ObjectId(existingBid.cropId) });
+            isCropOwner = linkedCrop && String(linkedCrop.farmerId) === String(req.user.id);
+        }
+
+        if (!isBidOwner && !isCropOwner) {
+            return res.status(403).json({ message: 'You are not allowed to update this bid' });
+        }
+
+        await bidsCollection.findOneAndUpdate(
             { _id: new ObjectId(req.params.id) },
             { $set: updateData },
             { returnDocument: 'after' } 
         );
-        if (!result) {
-            return res.status(404).json({ message: 'Bid not found' });
-        }
-        res.status(200).json(result); 
+
+        const updatedBid = await bidsCollection.findOne({ _id: new ObjectId(req.params.id) });
+        res.status(200).json(updatedBid); 
     } catch (error) {
         res.status(500).json({ error: "Failed to update bid" });
     }
@@ -78,7 +99,27 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // 6. DELETE: Withdraw/Remove a bid
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
-        const result = await client.db("AgriDB").collection("bids").deleteOne({ _id: new ObjectId(req.params.id) });
+        const bidsCollection = client.db("AgriDB").collection("bids");
+        const cropsCollection = client.db("AgriDB").collection("Crops");
+        const existingBid = await bidsCollection.findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingBid) {
+            return res.status(404).json({ message: 'Bid not found' });
+        }
+
+        const isBidOwner = String(existingBid.buyerId) === String(req.user.id);
+
+        let isCropOwnerForRejectedBid = false;
+        if (existingBid.status === 'Rejected') {
+            const linkedCrop = await cropsCollection.findOne({ _id: new ObjectId(existingBid.cropId) });
+            isCropOwnerForRejectedBid = linkedCrop && String(linkedCrop.farmerId) === String(req.user.id);
+        }
+
+        if (!isBidOwner && !isCropOwnerForRejectedBid) {
+            return res.status(403).json({ message: 'You are not allowed to delete this bid' });
+        }
+
+        const result = await bidsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'Bid not found' });
         }

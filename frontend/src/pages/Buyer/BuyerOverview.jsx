@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './BuyerDashboard.css';     
 import './BuyerOverview.css'; 
@@ -11,8 +12,19 @@ const BuyerOverview = () => {
   
   const [userData, setUserData] = useState(null);
   const [stats, setStats] = useState({ totalBidsPlaced: 0, pendingBids: 0, acceptedBids: 0, totalSpent: 0 });
+  const [myBids, setMyBids] = useState([]);
   const [recentPurchases, setRecentPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const calculateStats = (bids) => {
+    const paidBids = bids.filter((b) => b.status === 'Paid');
+    return {
+      totalBidsPlaced: bids.length,
+      pendingBids: bids.filter((b) => b.status === 'Pending').length,
+      acceptedBids: bids.filter((b) => b.status === 'Accepted' || b.status === 'Paid').length,
+      totalSpent: paidBids.reduce((sum, bid) => sum + (bid.total_amount || 0), 0)
+    };
+  };
 
   useEffect(() => {
     if (!userId) {
@@ -49,13 +61,9 @@ const BuyerOverview = () => {
         });
 
         // Calculate Real Stats
-        const paidBids = populatedBids.filter(b => b.status === 'Paid');
-        setStats({
-          totalBidsPlaced: populatedBids.length,
-          pendingBids: populatedBids.filter(b => b.status === 'Pending').length,
-          acceptedBids: populatedBids.filter(b => b.status === 'Accepted' || b.status === 'Paid').length,
-          totalSpent: paidBids.reduce((sum, bid) => sum + bid.total_amount, 0)
-        });
+        const paidBids = populatedBids.filter((b) => b.status === 'Paid');
+        setMyBids(populatedBids);
+        setStats(calculateStats(populatedBids));
 
         // Set table data to only show completed (Paid) purchases
         setRecentPurchases(paidBids);
@@ -73,6 +81,33 @@ const BuyerOverview = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  const handleDeletePurchase = async (bidId) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Purchase',
+      message: 'Delete this completed purchase from records?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bids/${bidId}`);
+
+      const updatedBids = myBids.filter((bid) => bid._id !== bidId);
+      setMyBids(updatedBids);
+      setStats(calculateStats(updatedBids));
+      setRecentPurchases(updatedBids.filter((bid) => bid.status === 'Paid'));
+
+      alert('Purchase deleted and overview totals updated.');
+    } catch (error) {
+      console.error('Failed to delete purchase:', error);
+      alert('Failed to delete purchase. Please try again.');
+    }
   };
 
   if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading overview...</div>;
@@ -141,6 +176,7 @@ const BuyerOverview = () => {
                     <th>Farmer</th>
                     <th>Quantity (Qtl)</th>
                     <th>Total Paid</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -151,6 +187,14 @@ const BuyerOverview = () => {
                       <td>{item.farmer_name}</td>
                       <td>{item.quantity}</td>
                       <td className="text-success fw-bold">₹{item.total_amount.toLocaleString('en-IN')}</td>
+                      <td>
+                        <button
+                          onClick={() => handleDeletePurchase(item._id)}
+                          style={{ padding: '0.35rem 0.75rem', border: '1px solid #d32f2f', background: 'white', color: '#d32f2f', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

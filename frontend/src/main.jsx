@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom' // <- THIS WAS LIKELY MISSING!
 import App from './App.jsx'
 import axios from 'axios'
+import { installAlertToToastBridge } from './utils/toast'
 // import './index.css' // Uncomment this line if you have an index.css file!
 
 // --- Global Security Interceptor ---
@@ -18,6 +19,8 @@ axios.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+installAlertToToastBridge();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

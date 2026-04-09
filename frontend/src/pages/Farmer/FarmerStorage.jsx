@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from "jspdf"; 
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './Dashboard.css';     
 import './FarmerStorage.css'; 
@@ -18,6 +19,9 @@ const FarmerStorage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStorage, setSelectedStorage] = useState(null);
   const [bookingData, setBookingData] = useState({ cropName: '', weight: '', fromDate: '' });
+  const [isEditBookingOpen, setIsEditBookingOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [editBookingData, setEditBookingData] = useState({ crop: '', weight: '', from_date: '' });
   
   // Real dynamic bookings from DB
   const [myBookings, setMyBookings] = useState([]);
@@ -98,6 +102,73 @@ const FarmerStorage = () => {
     } catch (error) {
       console.error("Failed to book storage:", error);
       alert("Booking failed. Please try again.");
+    }
+  };
+
+  const openEditBookingModal = (booking) => {
+    setEditingBooking(booking);
+    setEditBookingData({
+      crop: booking.crop || '',
+      weight: booking.weight || '',
+      from_date: booking.from_date || ''
+    });
+    setIsEditBookingOpen(true);
+  };
+
+  const closeEditBookingModal = () => {
+    setIsEditBookingOpen(false);
+    setEditingBooking(null);
+    setEditBookingData({ crop: '', weight: '', from_date: '' });
+  };
+
+  const handleBookingUpdate = async (e) => {
+    e.preventDefault();
+    if (!editingBooking) {
+      return;
+    }
+
+    try {
+      const payload = {
+        crop: editBookingData.crop,
+        weight: Number(editBookingData.weight),
+        from_date: editBookingData.from_date
+      };
+
+      await axios.put(`/api/bookings/${editingBooking._id}`, payload);
+
+      setMyBookings(myBookings.map((booking) => (
+        booking._id === editingBooking._id
+          ? { ...booking, ...payload }
+          : booking
+      )));
+
+      closeEditBookingModal();
+      alert('Storage request updated successfully.');
+    } catch (error) {
+      console.error('Failed to update booking:', error);
+      alert('Failed to update request. Please try again.');
+    }
+  };
+
+  const handleBookingDelete = async (bookingId) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Storage Request',
+      message: 'Delete this storage request?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bookings/${bookingId}`);
+      setMyBookings(myBookings.filter((booking) => booking._id !== bookingId));
+      alert('Request deleted successfully.');
+    } catch (error) {
+      console.error('Failed to delete booking:', error);
+      alert('Failed to delete request. Please try again.');
     }
   };
 
@@ -261,11 +332,32 @@ const FarmerStorage = () => {
                         </td>
                         <td style={{ padding: '1rem' }}>
                           {booking.status === 'Pending' ? (
-                            <span style={{ color: '#666', fontStyle: 'italic', fontSize: '0.85rem' }}>Waiting for owner...</span>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <button
+                                onClick={() => openEditBookingModal(booking)}
+                                style={{ padding: '0.45rem 0.8rem', border: '1px solid #1976d2', background: 'white', color: '#1976d2', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                              >
+                                Update
+                              </button>
+                              <button
+                                onClick={() => handleBookingDelete(booking._id)}
+                                style={{ padding: '0.45rem 0.8rem', border: '1px solid #d32f2f', background: 'white', color: '#d32f2f', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           ) : booking.status === 'Approved' ? (
                             <button onClick={() => generateReceipt(booking)} style={{ padding: '0.5rem 1rem', border: 'none', background: '#1e88e5', color: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>📄 Download Receipt</button>
                           ) : (
-                             <span style={{ color: '#d32f2f', fontSize: '0.85rem' }}>Declined</span>
+                            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <span style={{ color: '#d32f2f', fontSize: '0.85rem' }}>Declined</span>
+                              <button
+                                onClick={() => handleBookingDelete(booking._id)}
+                                style={{ padding: '0.35rem 0.65rem', border: '1px solid #d32f2f', background: 'white', color: '#d32f2f', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem' }}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -306,6 +398,53 @@ const FarmerStorage = () => {
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn-primary">Send Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditBookingOpen && editingBooking && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Update Storage Request</h3>
+              <button className="btn-close" onClick={closeEditBookingModal}>&times;</button>
+            </div>
+            <p className="modal-subtitle">Editing request for <strong>{editingBooking.facility_name}</strong></p>
+            <form onSubmit={handleBookingUpdate} className="modal-form">
+              <div className="form-group">
+                <label>Crop Name</label>
+                <input
+                  type="text"
+                  value={editBookingData.crop}
+                  onChange={(e) => setEditBookingData({ ...editBookingData, crop: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Weight to Store (Tons)</label>
+                <input
+                  type="number"
+                  value={editBookingData.weight}
+                  onChange={(e) => setEditBookingData({ ...editBookingData, weight: e.target.value })}
+                  min="1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Start Date</label>
+                <input
+                  type="date"
+                  value={editBookingData.from_date}
+                  onChange={(e) => setEditBookingData({ ...editBookingData, from_date: e.target.value })}
+                  required
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={closeEditBookingModal}>Cancel</button>
+                <button type="submit" className="btn-primary">Save Changes</button>
               </div>
             </form>
           </div>

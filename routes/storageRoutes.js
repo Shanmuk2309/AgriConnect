@@ -45,16 +45,24 @@ router.get('/:id', async (req, res) => {
 // 4. PUT: Update cold storage details (like available capacity)
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
+        const existingStorage = await client.db("AgriDB").collection("cold storages").findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingStorage) {
+            return res.status(404).json({ message: 'Cold storage not found' });
+        }
+
+        if (String(existingStorage.cs_ownerId) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You are not allowed to update this facility' });
+        }
+
         const { _id, ...updateData } = req.body; 
-        const result = await client.db("AgriDB").collection("cold storages").findOneAndUpdate(
+        await client.db("AgriDB").collection("cold storages").findOneAndUpdate(
             { _id: new ObjectId(req.params.id) },
             { $set: updateData },
             { returnDocument: 'after' } 
         );
-        if (!result) {
-            return res.status(404).json({ message: 'Cold storage not found' });
-        }
-        res.status(200).json(result); 
+        const updatedStorage = await client.db("AgriDB").collection("cold storages").findOne({ _id: new ObjectId(req.params.id) });
+        res.status(200).json(updatedStorage); 
     } catch (error) {
         res.status(500).json({ error: "Failed to update cold storage" });
     }
@@ -63,6 +71,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // 5. DELETE: Remove a cold storage facility
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
+        const existingStorage = await client.db("AgriDB").collection("cold storages").findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingStorage) {
+            return res.status(404).json({ message: 'Cold storage not found' });
+        }
+
+        if (String(existingStorage.cs_ownerId) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You are not allowed to delete this facility' });
+        }
+
         const result = await client.db("AgriDB").collection("cold storages").deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'Cold storage not found' });

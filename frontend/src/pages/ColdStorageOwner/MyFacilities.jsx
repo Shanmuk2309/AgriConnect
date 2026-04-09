@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './ColdStorageOwnerDashboard.css'; 
 import './StorageFacilities.css'; 
@@ -118,6 +119,28 @@ const MyFacilities = () => {
     }
   };
 
+  const handleDeleteFacility = async (facilityId, facilityName) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Facility',
+      message: `Delete ${facilityName}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/cold-storages/${facilityId}`);
+      setFacilities(facilities.filter((facility) => facility._id !== facilityId));
+      alert('Facility deleted successfully.');
+    } catch (deleteError) {
+      console.error('Failed to delete facility:', deleteError);
+      alert('Failed to delete facility. Please try again.');
+    }
+  };
+
   // --- Add Facility Functions ---
   const openAddModal = () => {
     setNewFacilityData({ name: '', location: '', total_capacity: '', price_per_ton: '' });
@@ -225,10 +248,16 @@ const MyFacilities = () => {
                   </div>
                 </div>
 
-                <div className="facility-card-actions">
-                  {/* --- UPDATED BUTTON --- */}
-                  <button className="btn-secondary" style={{ width: '100%' }} onClick={() => openEditModal(facility)}>
+                <div className="facility-card-actions" style={{ display: 'flex', gap: '0.6rem' }}>
+                  <button className="btn-secondary" style={{ flex: 1 }} onClick={() => openEditModal(facility)}>
                     Update
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    style={{ flex: 1, borderColor: '#d32f2f', color: '#d32f2f' }}
+                    onClick={() => handleDeleteFacility(facility._id, facility.name)}
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
