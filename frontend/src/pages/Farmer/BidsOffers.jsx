@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from "jspdf"; 
+import { toast } from '../../utils/toast';
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './Dashboard.css';      
 import './FarmerBids.css'; 
@@ -83,9 +85,9 @@ const BidsOffers = () => {
       // Update the Crop's status to 'Sold' so it disappears from Marketplace
       if (newStatus === 'Accepted' && cropId) {
         await axios.put(`/api/crops/${cropId}`, { status: 'Sold' });
-        alert("Offer accepted! The crop has been marked as Sold and removed from the marketplace. Waiting for the buyer to complete payment.");
+        toast.success('Offer Accepted');
       } else if (newStatus === 'Rejected') {
-        alert("Offer rejected.");
+        toast.warning('Offer Rejected');
       }
 
       // Update the local UI state
@@ -93,7 +95,29 @@ const BidsOffers = () => {
       
     } catch (error) {
       console.error(`Failed to mark bid as ${newStatus}:`, error);
-      alert("Failed to update status.");
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleDeleteRejectedBid = async (bidId) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Rejected Bid',
+      message: 'Delete this rejected bid?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bids/${bidId}`);
+      setBids(bids.filter((bid) => bid._id !== bidId));
+      alert('Rejected bid deleted successfully.');
+    } catch (error) {
+      console.error('Failed to delete rejected bid:', error);
+      alert('Failed to delete rejected bid. Please try again.');
     }
   };
 
@@ -216,6 +240,18 @@ const BidsOffers = () => {
                     <div className="bid-card-actions">
                       <button className="btn-secondary" style={{ width: '100%', borderColor: '#1565c0', color: '#1565c0' }} onClick={() => downloadReceipt(bid)}>
                         📄 Download Seller Receipt
+                      </button>
+                    </div>
+                  )}
+
+                  {bid.status === 'Rejected' && (
+                    <div className="bid-card-actions">
+                      <button
+                        className="btn-secondary"
+                        style={{ width: '100%', borderColor: '#d32f2f', color: '#d32f2f' }}
+                        onClick={() => handleDeleteRejectedBid(bid._id)}
+                      >
+                        Delete Rejected Offer
                       </button>
                     </div>
                   )}

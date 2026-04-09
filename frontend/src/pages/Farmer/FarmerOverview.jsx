@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './Dashboard.css';     
 import './FarmerOverview.css'; 
@@ -13,6 +14,17 @@ const FarmerOverview = () => {
   const [stats, setStats] = useState({ totalListed: 0, acceptedBids: 0, rejectedBids: 0, inStorageCount: 0 });
   const [storageDetails, setStorageDetails] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const updateOverviewState = (myCrops, myIncomingBids, approvedBookings) => {
+    setStats({
+      totalListed: myCrops.length,
+      acceptedBids: myIncomingBids.filter((b) => b.status === 'Accepted' || b.status === 'Paid').length,
+      rejectedBids: myIncomingBids.filter((b) => b.status === 'Rejected').length,
+      inStorageCount: approvedBookings.length
+    });
+
+    setStorageDetails(approvedBookings);
+  };
 
   useEffect(() => {
     if (!userId) {
@@ -39,14 +51,7 @@ const FarmerOverview = () => {
         const myIncomingBids = bidsRes.data.filter(bid => myCropIds.includes(bid.cropId));
         const approvedBookings = bookingsRes.data.filter(b => b.status === 'Approved');
 
-        setStats({
-          totalListed: myCrops.length,
-          acceptedBids: myIncomingBids.filter(b => b.status === 'Accepted' || b.status === 'Paid').length,
-          rejectedBids: myIncomingBids.filter(b => b.status === 'Rejected').length,
-          inStorageCount: approvedBookings.length
-        });
-
-        setStorageDetails(approvedBookings);
+        updateOverviewState(myCrops, myIncomingBids, approvedBookings);
 
       } catch (error) {
         console.error("Failed to fetch overview data:", error);
@@ -61,6 +66,30 @@ const FarmerOverview = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  const handleRemoveFromStorage = async (bookingId) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Remove From Storage',
+      message: 'Mark this crop as removed from cold storage?',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bookings/${bookingId}`);
+      const updatedStorage = storageDetails.filter((item) => item._id !== bookingId);
+      setStorageDetails(updatedStorage);
+      setStats((prev) => ({ ...prev, inStorageCount: updatedStorage.length }));
+      alert('Crop removed from storage records and capacity restored.');
+    } catch (error) {
+      console.error('Failed to remove crop from storage:', error);
+      alert('Failed to remove crop from storage. Please try again.');
+    }
   };
 
   if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading overview...</div>;
@@ -126,6 +155,7 @@ const FarmerOverview = () => {
                     <th>Crop</th>
                     <th>Quantity Stored (Tons)</th>
                     <th>Storage Facility</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,6 +164,14 @@ const FarmerOverview = () => {
                       <td className="fw-bold">{item.crop}</td>
                       <td>{item.weight}</td>
                       <td>{item.facility_name}</td>
+                      <td>
+                        <button
+                          onClick={() => handleRemoveFromStorage(item._id)}
+                          style={{ padding: '0.35rem 0.75rem', border: '1px solid #d32f2f', background: 'white', color: '#d32f2f', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

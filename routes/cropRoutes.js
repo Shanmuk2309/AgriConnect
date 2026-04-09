@@ -54,19 +54,27 @@ router.get('/:id', async (req, res) => {
 // 4. PUT: Update a specific crop
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
+        const existingCrop = await client.db("AgriDB").collection("Crops").findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingCrop) {
+            return res.status(404).json({ message: 'Crop not found' });
+        }
+
+        if (String(existingCrop.farmerId) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You are not allowed to update this crop' });
+        }
+
         // Prevent accidental overwrite of the _id field
         const { _id, ...updateData } = req.body; 
 
-        const result = await client.db("AgriDB").collection("Crops").findOneAndUpdate(
+        await client.db("AgriDB").collection("Crops").findOneAndUpdate(
             { _id: new ObjectId(req.params.id) },
             { $set: updateData },
             { returnDocument: 'after' } // Returns the newly updated document
         );
 
-        if (!result) {
-            return res.status(404).json({ message: 'Crop not found' });
-        }
-        res.status(200).json(result); 
+        const updatedCrop = await client.db("AgriDB").collection("Crops").findOne({ _id: new ObjectId(req.params.id) });
+        res.status(200).json(updatedCrop); 
     } catch (error) {
         console.error("Failed to update crop: ", error);
         res.status(500).json({ error: "Failed to update crop" });
@@ -76,6 +84,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // 5. DELETE: Remove a crop listing
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
+        const existingCrop = await client.db("AgriDB").collection("Crops").findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!existingCrop) {
+            return res.status(404).json({ message: 'Crop not found' });
+        }
+
+        if (String(existingCrop.farmerId) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You are not allowed to delete this crop' });
+        }
+
         const result = await client.db("AgriDB").collection("Crops").deleteOne({ _id: new ObjectId(req.params.id) });
         
         // deletedCount tells us if a document was actually found and removed

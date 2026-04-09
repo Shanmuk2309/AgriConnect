@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from "jspdf"; 
+import { toast } from '../../utils/toast';
 import '../Public/LandingPage.css'; 
 import './BuyerDashboard.css';     
 import './BuyerBids.css'; 
@@ -17,6 +18,11 @@ const BuyerBids = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [isEditBidOpen, setIsEditBidOpen] = useState(false);
+  const [editingBid, setEditingBid] = useState(null);
+  const [editBidAmount, setEditBidAmount] = useState('');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deletingBid, setDeletingBid] = useState(null);
 
   useEffect(() => {
     if (!userId) {
@@ -71,6 +77,69 @@ const BuyerBids = () => {
     setIsPaymentOpen(true);
   };
 
+  const openEditBidModal = (bid) => {
+    setEditingBid(bid);
+    setEditBidAmount(String(bid.bid_amount || ''));
+    setIsEditBidOpen(true);
+  };
+
+  const closeEditBidModal = () => {
+    setIsEditBidOpen(false);
+    setEditingBid(null);
+    setEditBidAmount('');
+  };
+
+  const handleBidUpdate = async (e) => {
+    e.preventDefault();
+
+    if (!editingBid) {
+      return;
+    }
+
+    try {
+      const payload = { bid_amount: Number(editBidAmount) };
+      await axios.put(`/api/bids/${editingBid._id}`, payload);
+
+      setBids(bids.map((bid) => (
+        bid._id === editingBid._id
+          ? { ...bid, bid_amount: Number(editBidAmount) }
+          : bid
+      )));
+
+      closeEditBidModal();
+      toast.success('Bid Updated');
+    } catch (error) {
+      console.error('Failed to update bid:', error);
+      toast.error('Failed to update bid');
+    }
+  };
+
+  const openDeleteConfirm = (bid) => {
+    setDeletingBid(bid);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    setIsDeleteConfirmOpen(false);
+    setDeletingBid(null);
+  };
+
+  const handleBidDelete = async () => {
+    if (!deletingBid) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bids/${deletingBid._id}`);
+      setBids(bids.filter((bid) => bid._id !== deletingBid._id));
+      closeDeleteConfirm();
+      toast.success(deletingBid.status === 'Rejected' ? 'Rejected Bid Deleted' : 'Bid Withdrawn');
+    } catch (error) {
+      console.error('Failed to delete bid:', error);
+      toast.error('Failed to delete bid');
+    }
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -82,10 +151,10 @@ const BuyerBids = () => {
       
       setIsPaymentOpen(false);
       setSelectedBid(null);
-      alert("Payment successful! The farmer has been notified.");
+      toast.success('Payment Successful');
     } catch (error) {
       console.error("Payment error:", error);
-      alert("Payment failed. Please try again.");
+      toast.error('Payment failed. Please try again.');
     }
   };
 
@@ -191,10 +260,37 @@ const BuyerBids = () => {
                     </div>
                   )}
 
+                  {bid.status === 'Pending' && (
+                    <div className="bid-card-actions" style={{ display: 'flex', gap: '0.6rem' }}>
+                      <button className="btn-secondary" style={{ flex: 1 }} onClick={() => openEditBidModal(bid)}>
+                        Update Offer
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        style={{ flex: 1, borderColor: '#d32f2f', color: '#d32f2f' }}
+                        onClick={() => openDeleteConfirm(bid)}
+                      >
+                        Withdraw
+                      </button>
+                    </div>
+                  )}
+
                   {bid.status === 'Paid' && (
                     <div className="bid-card-actions">
                       <button className="btn-secondary" style={{ width: '100%', borderColor: '#1565c0', color: '#1565c0' }} onClick={() => downloadReceipt(bid)}>
                         📄 Download Receipt
+                      </button>
+                    </div>
+                  )}
+
+                  {bid.status === 'Rejected' && (
+                    <div className="bid-card-actions">
+                      <button
+                        className="btn-secondary"
+                        style={{ width: '100%', borderColor: '#d32f2f', color: '#d32f2f' }}
+                        onClick={() => openDeleteConfirm(bid)}
+                      >
+                        Delete Rejected Bid
                       </button>
                     </div>
                   )}
@@ -254,6 +350,68 @@ const BuyerBids = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isEditBidOpen && editingBid && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <h3>Update Your Bid</h3>
+              <button className="btn-close" onClick={closeEditBidModal}>&times;</button>
+            </div>
+
+            <p className="modal-subtitle">
+              Editing bid for <strong>{editingBid.crop_name}</strong>
+            </p>
+
+            <form onSubmit={handleBidUpdate} className="modal-form">
+              <div className="form-group">
+                <label>Offer Price (₹ per Quintal)</label>
+                <input
+                  type="number"
+                  value={editBidAmount}
+                  onChange={(e) => setEditBidAmount(e.target.value)}
+                  min="1"
+                  required
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={closeEditBidModal}>Cancel</button>
+                <button type="submit" className="btn-primary">Save Offer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isDeleteConfirmOpen && deletingBid && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <h3>{deletingBid.status === 'Rejected' ? 'Delete Rejected Bid' : 'Withdraw Bid'}</h3>
+              <button className="btn-close" onClick={closeDeleteConfirm}>&times;</button>
+            </div>
+
+            <p className="modal-subtitle" style={{ marginBottom: '1rem' }}>
+              {deletingBid.status === 'Rejected'
+                ? `Remove this rejected bid for ${deletingBid.crop_name}?`
+                : `Withdraw your pending offer for ${deletingBid.crop_name}?`}
+            </p>
+
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={closeDeleteConfirm}>Cancel</button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ borderColor: '#d32f2f', color: '#d32f2f' }}
+                onClick={handleBidDelete}
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}

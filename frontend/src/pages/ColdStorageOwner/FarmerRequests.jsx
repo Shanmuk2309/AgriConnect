@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from "jspdf"; 
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './ColdStorageOwnerDashboard.css'; 
 import './StorageRequests.css'; 
@@ -193,6 +194,28 @@ const FarmerRequests = () => {
     }
   };
 
+  const handleDeleteDeclined = async (requestId) => {
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Request',
+      message: 'Delete this declined request?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/bookings/${requestId}`);
+      setRequests(requests.filter((request) => String(request._id) !== String(requestId)));
+      alert('Declined request deleted successfully.');
+    } catch (error) {
+      console.error('Failed to delete declined request:', error);
+      alert('Failed to delete declined request. Please try again.');
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: '50px', textAlign: 'center' }}>Loading booking requests...</div>;
   }
@@ -282,6 +305,18 @@ const FarmerRequests = () => {
                         onClick={() => downloadAcknowledgment(req)}
                       >
                         📄 Download Acknowledgment
+                      </button>
+                    </div>
+                  )}
+
+                  {req.status === 'Declined' && (
+                    <div className="request-card-actions">
+                      <button
+                        className="btn-secondary"
+                        style={{ width: '100%', borderColor: '#d32f2f', color: '#d32f2f' }}
+                        onClick={() => handleDeleteDeclined(req._id)}
+                      >
+                        Delete Declined Request
                       </button>
                     </div>
                   )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from '../../utils/confirm';
 import '../Public/LandingPage.css'; 
 import './Dashboard.css';           
 import './FarmerCrops.css';         
@@ -44,7 +45,13 @@ const MyCrops = () => {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this crop listing?");
+    const confirmDelete = await confirmDialog({
+      title: 'Delete Crop Listing',
+      message: 'Are you sure you want to delete this crop listing?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
     if (confirmDelete) {
       try {
         // Actually delete it from the Database

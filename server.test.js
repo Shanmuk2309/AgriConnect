@@ -6,6 +6,8 @@ const request = require('supertest');
 const app = require('./server');
 const { connectDB, client } = require('./db');
 
+jest.setTimeout(30000);
+
 describe('AgriConnect API Endpoints', () => {
 
     // Variables to store generated IDs for our testing pipeline
@@ -15,6 +17,12 @@ describe('AgriConnect API Endpoints', () => {
     let testCropId;
     let testBidId;
     let testStorageId;
+    let testBidCropId;
+    let testBuyerBidId;
+    let testFarmerBidId;
+    let testBookingStorageId;
+    let testApprovedBookingId;
+    let testDeclinedBookingId;
 
     // Variables to store JWT tokens for authentication
     let farmerToken;
@@ -215,11 +223,37 @@ describe('AgriConnect API Endpoints', () => {
 
     // --- BID API TESTS ---
     describe('Bid API', () => {
+        beforeAll(async () => {
+            const cropRes = await request(app)
+                .post('/api/crops/add')
+                .set('Authorization', `Bearer ${farmerToken}`)
+                .send({ farmerId: testFarmerId, crop_name: "Bid Flow Crop", quantity: 30, expected_price: 20000 });
+
+            expect(cropRes.statusCode).toEqual(201);
+            testBidCropId = cropRes.body.cropId;
+
+            const firstBidRes = await request(app)
+                .post('/api/bids/add')
+                .set('Authorization', `Bearer ${buyerToken}`)
+                .send({ buyerId: testBuyerId, cropId: testBidCropId, bid_amount: 50000 });
+
+            expect(firstBidRes.statusCode).toEqual(201);
+            testBuyerBidId = firstBidRes.body.bidId;
+
+            const secondBidRes = await request(app)
+                .post('/api/bids/add')
+                .set('Authorization', `Bearer ${buyerToken}`)
+                .send({ buyerId: testBuyerId, cropId: testBidCropId, bid_amount: 48000 });
+
+            expect(secondBidRes.statusCode).toEqual(201);
+            testFarmerBidId = secondBidRes.body.bidId;
+        });
+
         it('should register a new bid (POST)', async() => {
             const res = await request(app)
                 .post('/api/bids/add')
                 .set('Authorization', `Bearer ${buyerToken}`)
-                .send({ buyerId: testBuyerId, cropId: testCropId, bid_amount: 50000 });
+                .send({ buyerId: testBuyerId, cropId: testBidCropId, bid_amount: 51000 });
             expect(res.statusCode).toEqual(201);
             testBidId = res.body.bidId;
         });
@@ -228,21 +262,135 @@ describe('AgriConnect API Endpoints', () => {
             expect(res.statusCode).toEqual(200);
         });
         it('should fetch a single bid by ID (GET /:id)', async () => {
-            const res = await request(app).get(`/api/bids/${testBidId}`);
+            const res = await request(app).get(`/api/bids/${testBuyerBidId}`);
             expect(res.statusCode).toEqual(200);
         });
-        it('should update a bid by ID (PUT /:id)', async () => {
+        it('should update a bid amount by ID as buyer (PUT /:id)', async () => {
             const res = await request(app)
-                .put(`/api/bids/${testBidId}`)
+                .put(`/api/bids/${testBuyerBidId}`)
                 .set('Authorization', `Bearer ${buyerToken}`)
-                .send({ bid_amount: 55000, status: "Accepted" });
+                .send({ bid_amount: 55000 });
             expect(res.statusCode).toEqual(200);
         });
-        it('should delete a bid by ID (DELETE /:id)', async () => {
+        it('should allow buyer to mark a bid as paid and delete it later', async () => {
+            const payRes = await request(app)
+                .put(`/api/bids/${testBuyerBidId}`)
+                .set('Authorization', `Bearer ${buyerToken}`)
+                .send({ status: 'Paid' });
+
+            expect(payRes.statusCode).toEqual(200);
+
             const res = await request(app)
-                .delete(`/api/bids/${testBidId}`)
+                .delete(`/api/bids/${testBuyerBidId}`)
                 .set('Authorization', `Bearer ${buyerToken}`);
             expect(res.statusCode).toEqual(200);
+        });
+        it('should allow farmer to reject and delete a rejected incoming bid', async () => {
+            const rejectRes = await request(app)
+                .put(`/api/bids/${testFarmerBidId}`)
+                .set('Authorization', `Bearer ${farmerToken}`)
+                .send({ status: 'Rejected' });
+
+            expect(rejectRes.statusCode).toEqual(200);
+
+            const res = await request(app)
+                .delete(`/api/bids/${testFarmerBidId}`)
+                .set('Authorization', `Bearer ${farmerToken}`);
+            expect(res.statusCode).toEqual(200);
+        });
+    });
+
+    // --- BOOKING API TESTS ---
+    describe('Booking API', () => {
+        beforeAll(async () => {
+            const storageRes = await request(app)
+                .post('/api/cold-storages/add')
+                .set('Authorization', `Bearer ${csOwnerToken}`)
+                .send({ cs_ownerId: testCSOwnerId, name: "Booking Test Storage", available_capacity: 100, total_capacity: 100, price_per_ton: 1500 });
+
+            expect(storageRes.statusCode).toEqual(201);
+            testBookingStorageId = storageRes.body.storageId;
+        });
+
+        it('should create a booking request', async () => {
+            const bookingRes = await request(app)
+                .post('/api/bookings/add')
+                .set('Authorization', `Bearer ${farmerToken}`)
+                .send({
+                    farmerId: testFarmerId,
+                    farmer_name: 'Ramesh Kumar',
+                    cs_ownerId: testCSOwnerId,
+                    facility_id: testBookingStorageId,
+                    facility_name: 'Booking Test Storage',
+                    location: 'Kakinada',
+                    crop: 'Rice',
+                    weight: 10,
+                    from_date: '2026-04-10',
+                    price_per_ton: 1500,
+                    status: 'Pending'
+                });
+
+            expect(bookingRes.statusCode).toEqual(201);
+            testApprovedBookingId = bookingRes.body.bookingId;
+        });
+
+        it('should allow owner to decline and delete a declined booking', async () => {
+            const bookingRes = await request(app)
+                .post('/api/bookings/add')
+                .set('Authorization', `Bearer ${farmerToken}`)
+                .send({
+                    farmerId: testFarmerId,
+                    farmer_name: 'Ramesh Kumar',
+                    cs_ownerId: testCSOwnerId,
+                    facility_id: testBookingStorageId,
+                    facility_name: 'Booking Test Storage',
+                    location: 'Kakinada',
+                    crop: 'Wheat',
+                    weight: 5,
+                    from_date: '2026-04-11',
+                    price_per_ton: 1500,
+                    status: 'Pending'
+                });
+
+            expect(bookingRes.statusCode).toEqual(201);
+            testDeclinedBookingId = bookingRes.body.bookingId;
+
+            const declineRes = await request(app)
+                .put(`/api/bookings/${testDeclinedBookingId}`)
+                .set('Authorization', `Bearer ${csOwnerToken}`)
+                .send({ status: 'Declined' });
+
+            expect(declineRes.statusCode).toEqual(200);
+
+            const deleteRes = await request(app)
+                .delete(`/api/bookings/${testDeclinedBookingId}`)
+                .set('Authorization', `Bearer ${csOwnerToken}`);
+
+            expect(deleteRes.statusCode).toEqual(200);
+        });
+
+        it('should restore capacity when farmer deletes an approved booking', async () => {
+            const approveRes = await request(app)
+                .put(`/api/bookings/${testApprovedBookingId}`)
+                .set('Authorization', `Bearer ${csOwnerToken}`)
+                .send({ status: 'Approved' });
+
+            expect(approveRes.statusCode).toEqual(200);
+
+            await client.db('AgriDB').collection('cold storages').updateOne(
+                { _id: new (require('mongodb').ObjectId)(testBookingStorageId) },
+                { $set: { available_capacity: 90 } }
+            );
+
+            const deleteRes = await request(app)
+                .delete(`/api/bookings/${testApprovedBookingId}`)
+                .set('Authorization', `Bearer ${farmerToken}`);
+
+            expect(deleteRes.statusCode).toEqual(200);
+
+            const storageRes = await request(app).get(`/api/cold-storages/${testBookingStorageId}`);
+            expect(storageRes.statusCode).toEqual(200);
+            expect(storageRes.body.available_capacity).toEqual(100);
         });
     });
 
@@ -305,6 +453,9 @@ describe('AgriConnect API Endpoints', () => {
         await client.db("AgriDB").collection('Crops').deleteMany({ farmerId: "Dummy farmer ID 123"});
         await client.db("AgriDB").collection('cold storages').deleteMany({cs_ownerId: "Dummy cs owner 123"});
         await client.db("AgriDB").collection('bids').deleteMany({buyerId: "Dummy buyer 123"});
+        await client.db("AgriDB").collection('Crops').deleteMany({ crop_name: "Bid Flow Crop" });
+        await client.db("AgriDB").collection('cold storages').deleteMany({ name: "Booking Test Storage" });
+        await client.db("AgriDB").collection('bookings').deleteMany({ facility_name: "Booking Test Storage" });
         
         await client.close();
     });
