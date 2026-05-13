@@ -49,7 +49,7 @@ pipeline {
         stage('API Tests (Newman)') {
             steps {
                 echo 'Running Postman/Newman API tests...'
-                bat 'npm run test:api-ci'
+                bat 'npm run test:api'
             }
         }
 
