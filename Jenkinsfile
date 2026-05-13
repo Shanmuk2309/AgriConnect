@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HOST = 'tcp://localhost:2375'
         DOCKER_USERNAME='shanmuk2309'
-        MONGO_ATLAS_URI='mongodb+srv://Shanmuk:%40Pandu2006@cluster-1.movdrxf.mongodb.net/?appName=Cluster-1'
+        MONGO_ATLAS_URI = 'mongodb://Shanmuk:%40Pandu2006@ac-c0lijgx-shard-00-00.movdrxf.mongodb.net:27017,ac-c0lijgx-shard-00-01.movdrxf.mongodb.net:27017,ac-c0lijgx-shard-00-02.movdrxf.mongodb.net:27017/AgriDB?ssl=true&replicaSet=atlas-c84kpj-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster-1'
         JWT_SECRET='ab55cc7adf416bfb12997c54c2589df9ee35dbc87e5d6854765d5d321dd9d9bbdf0963a1e7160abab791ae244a06b58ed9c97250078ed7adacc2f10e61f80652'
     }
 

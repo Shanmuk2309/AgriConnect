@@ -1,14 +1,9 @@
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
-// Fallback URI for Jenkins / Windows DNS issues
-const fallbackUri =
-    "mongodb://Shanmuk:%40Pandu2006@ac-c0lijgx-shard-00-00.movdrxf.mongodb.net:27017,ac-c0lijgx-shard-00-01.movdrxf.mongodb.net:27017,ac-c0lijgx-shard-00-02.movdrxf.mongodb.net:27017/?ssl=true&replicaSet=atlas-c84kpj-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster-1";
+// MongoDB Atlas Non-SRV URI
+const uri = process.env.MONGO_ATLAS_URI;
 
-// Use Atlas URI from .env if available
-const uri = process.env.MONGO_ATLAS_URI && process.env.MONGO_ATLAS_URI.includes('%40') ? process.env.MONGO_ATLAS_URI : fallbackUri;
-
-// Mongo client options
 const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 10000,
     connectTimeoutMS: 10000,
@@ -17,16 +12,21 @@ const client = new MongoClient(uri, {
 let AgriDB = null;
 
 async function connectDB() {
+
     try {
-        // Prevent reconnecting if already connected
+
+        // Reuse existing DB connection
         if (AgriDB) {
             return AgriDB;
         }
+
+        console.log("Connecting to MongoDB...");
 
         await client.connect();
 
         AgriDB = client.db("AgriDB");
 
+        // Test database connection
         await AgriDB.command({ ping: 1 });
 
         console.log("Connected successfully to MongoDB");
@@ -36,6 +36,8 @@ async function connectDB() {
     } catch (error) {
 
         console.error("Could not connect to MongoDB:", error.message);
+
+        // Do NOT use process.exit() in Jest/Jenkins
         throw error;
     }
 }
