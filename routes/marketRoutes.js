@@ -32,29 +32,25 @@ const fetchMarketPrices = async (req, res) => {
         if (state) baseParams['filters[state.keyword]'] = formatAgmarknetString(state);      
         if (district) baseParams['filters[district]'] = formatAgmarknetString(district);
 
-        // ATTEMPT 1: Try to get today's data
-        let response = await axios.get(apiUrl, {
-            params: { ...baseParams, 'filters[arrival_date]': currentDate }
-        });
-
-        // ATTEMPT 2: If today's data is empty, fetch the latest available data
-        if (!response.data.records || response.data.records.length === 0) {
-            console.log("No data for today yet, fetching latest available records...");
-            response = await axios.get(apiUrl, { params: baseParams });
-        }
-
-        // Determine actual date of the fetched records
+        // Fetch the latest available records without date filter
+        const response = await axios.get(apiUrl, { params: baseParams });
+        
+        let validRecords = [];
         let actualDateFetched = currentDate;
+
         if (response.data.records && response.data.records.length > 0) {
-            // Use the arrival_date from the first record if available
+            // Get the date of the most recent record
             actualDateFetched = response.data.records[0].arrival_date || currentDate;
+            
+            // Filter to ensure no mixed dates are returned
+            validRecords = response.data.records.filter(r => r.arrival_date === actualDateFetched);
         }
 
         // Send data to frontend
         res.status(200).json({
             success: true,
             date_fetched: actualDateFetched,
-            records: response.data.records
+            records: validRecords
         });
 
     } catch (error) {
