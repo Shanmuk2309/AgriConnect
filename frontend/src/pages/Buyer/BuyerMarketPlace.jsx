@@ -182,6 +182,7 @@ const BuyerMarketplace = () => {
                     <tr>
                       <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Market</th>
                       <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Commodity</th>
+                      <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Grade</th>
                       <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Min Price (₹/Qtl)</th>
                       <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Max Price (₹/Qtl)</th>
                       <th style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>Modal Price</th>
@@ -192,6 +193,7 @@ const BuyerMarketplace = () => {
                       <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                         <td style={{ padding: '1rem' }}>{record.market || record.Market}</td>
                         <td style={{ padding: '1rem' }}>{record.commodity || record.Commodity}</td>
+                        <td style={{ padding: '1rem' }}>{record.grade || record.Grade || '-'}</td>
                         <td style={{ padding: '1rem', color: '#d32f2f' }}>₹{record.min_price || record.Min_Price}</td>
                         <td style={{ padding: '1rem', color: '#1976d2' }}>₹{record.max_price || record.Max_Price}</td>
                         <td style={{ padding: '1rem', fontWeight: 'bold', color: '#2e7d32' }}>₹{record.modal_price || record.Modal_Price}</td>

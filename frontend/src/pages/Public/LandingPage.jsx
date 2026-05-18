@@ -169,6 +169,7 @@ const LandingPage = () => {
                     <tr>
                       <th>Market / Mandi</th>
                       <th>Commodity</th>
+                      <th>Grade</th>
                       <th>Min Price (₹/Qtl)</th>
                       <th>Max Price (₹/Qtl)</th>
                       <th>Modal Price (₹/Qtl)</th>
@@ -181,6 +182,7 @@ const LandingPage = () => {
                           <td className="fw-bold">{record.market || record.Market}</td>
                           {/* Added Commodity Column to show what crop it is */}
                           <td>{record.commodity || record.Commodity}</td>
+                          <td>{record.grade || record.Grade || '-'}</td>
                           <td className="text-danger">₹{record.min_price || record.Min_Price}</td>
                           <td className="text-success">₹{record.max_price || record.Max_Price}</td>
                           <td className="fw-bold">₹{record.modal_price || record.Modal_Price}</td>
@@ -188,7 +190,7 @@ const LandingPage = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="text-center">No live data found for this selection. Try checking spelling or change filters.</td>
+                        <td colSpan="6" className="text-center">No live data found for this selection. Try checking spelling or change filters.</td>
                       </tr>
                     )}
                   </tbody>
