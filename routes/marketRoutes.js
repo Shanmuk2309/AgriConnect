@@ -43,10 +43,17 @@ const fetchMarketPrices = async (req, res) => {
             response = await axios.get(apiUrl, { params: baseParams });
         }
 
+        // Determine actual date of the fetched records
+        let actualDateFetched = currentDate;
+        if (response.data.records && response.data.records.length > 0) {
+            // Use the arrival_date from the first record if available
+            actualDateFetched = response.data.records[0].arrival_date || currentDate;
+        }
+
         // Send data to frontend
         res.status(200).json({
             success: true,
-            date_fetched: currentDate,
+            date_fetched: actualDateFetched,
             records: response.data.records
         });
 
